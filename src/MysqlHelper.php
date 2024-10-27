@@ -6,6 +6,7 @@ class MysqlHelper extends CommonDbHelper
 {
     public function listTables(): array
     {
-        return $this->fetchCol('SHOW TABLES');
+        // Useless cast, but makes phpstan happy
+        return array_map(fn ($value) => (string) $value, $this->fetchCol('SHOW TABLES'));
     }
 }

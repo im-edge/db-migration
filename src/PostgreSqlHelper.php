@@ -21,6 +21,7 @@ class PostgreSqlHelper extends CommonDbHelper
             . ' AND NOT EXISTS (SELECT 1 FROM pg_user WHERE usesysid = c.relowner)'
             . " AND c.relname !~ '^pg_'";
 
-        return $this->fetchCol($sql);
+        // Useless cast, but makes phpstan happy
+        return array_map(fn ($value) => (string) $value, $this->fetchCol($sql));
     }
 }
