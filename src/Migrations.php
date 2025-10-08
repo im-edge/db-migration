@@ -41,37 +41,6 @@ class Migrations
         }
     }
 
-    /**
-     * Still unused
-     */
-    protected function createMigrationsTable(): void
-    {
-        if ($this->dbType === self::DB_TYPE_POSTGRESQL) {
-            $create = /** @lang text */
-                <<<SQL
-
-CREATE TABLE $this->tableName (
-  schema_version SMALLINT NOT NULL,
-  component_name VARCHAR(64) NOT NULL,
-  migration_time TIMESTAMP WITH TIME ZONE NOT NULL,
-  PRIMARY KEY (component_name, schema_version)
-);
-
-SQL;
-        } else {
-            $create = /** @lang text */
-                <<<SQL
-CREATE TABLE $this->tableName (
-  schema_version SMALLINT UNSIGNED NOT NULL,
-  component_name VARCHAR(64) NOT NULL,
-  migration_time DATETIME NOT NULL,
-  PRIMARY KEY (component_name, schema_version)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_bin;
-SQL;
-        }
-        $this->db->exec($create);
-    }
-
     public function getLastMigrationNumber(): int
     {
         try {
@@ -230,5 +199,36 @@ SQL;
     protected function getFullSchemaFile(): string
     {
         return $this->getSchemaDirectory($this->dbType . '.sql');
+    }
+
+    /**
+     * Still unused
+     */
+    protected function createMigrationsTable(): void
+    {
+        if ($this->dbType === self::DB_TYPE_POSTGRESQL) {
+            $create = /** @lang text */
+                <<<SQL
+
+CREATE TABLE $this->tableName (
+  schema_version SMALLINT NOT NULL,
+  component_name VARCHAR(64) NOT NULL,
+  migration_time TIMESTAMP WITH TIME ZONE NOT NULL,
+  PRIMARY KEY (component_name, schema_version)
+);
+
+SQL;
+        } else {
+            $create = /** @lang text */
+                <<<SQL
+CREATE TABLE $this->tableName (
+  schema_version SMALLINT UNSIGNED NOT NULL,
+  component_name VARCHAR(64) NOT NULL,
+  migration_time DATETIME NOT NULL,
+  PRIMARY KEY (component_name, schema_version)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_bin;
+SQL;
+        }
+        $this->db->exec($create);
     }
 }
