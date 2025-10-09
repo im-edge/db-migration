@@ -4,17 +4,13 @@ namespace IMEdge\DbMigration;
 
 use DirectoryIterator;
 use Exception;
+use IMEdge\PDO\PDO;
 use InvalidArgumentException;
-use PDO;
 use RuntimeException;
 
 class Migrations
 {
-    protected const DB_TYPE_MYSQL = 'mysql';
-    protected const DB_TYPE_POSTGRESQL = 'pgsql';
-
     protected string $dbType;
-    protected DbHelper $dbHelper;
 
     public function __construct(
         protected PDO $db,
@@ -22,23 +18,14 @@ class Migrations
         protected string $componentName,
         protected string $tableName = 'schema_migration'
     ) {
-        $driverName = $db->getAttribute(PDO::ATTR_DRIVER_NAME);
-        assert(is_string($driverName));
-        switch ($driverName) {
-            case self::DB_TYPE_MYSQL:
-                $this->dbType = self::DB_TYPE_MYSQL;
-                $this->dbHelper = new MysqlHelper($db);
-                break;
-            case self::DB_TYPE_POSTGRESQL:
-                $this->dbType = self::DB_TYPE_POSTGRESQL;
-                $this->dbHelper = new PostgreSqlHelper($db);
-                break;
-            default:
-                throw new InvalidArgumentException(sprintf(
-                    'Migrations are currently supported for MySQL/MariaDB and PostgreSQL only, got %s',
-                    $driverName
-                ));
-        }
+        $dbFamily = $db->getDriverFamily();
+        $this->dbType = match ($dbFamily) {
+            'mysql', 'pgsql' => $dbFamily,
+            default => throw new InvalidArgumentException(sprintf(
+                'Migrations are currently supported for MySQL/MariaDB and PostgreSQL only, got %s',
+                $this->db->getDriverName()
+            )),
+        };
     }
 
     public function getLastMigrationNumber(): int
@@ -48,7 +35,7 @@ class Migrations
                 . '  FROM m.' . $this->tableName
                 . ' WHERE component_name = ?';
 
-            return (int) $this->dbHelper->fetchOne($query, [$this->componentName]);
+            return (int) $this->db->fetchOne($query, [$this->componentName]);
         } catch (Exception) {
             return 0;
         }
@@ -56,12 +43,12 @@ class Migrations
 
     public function hasAnyTable(): bool
     {
-        return count($this->dbHelper->listTables()) > 0;
+        return count($this->db->listTables()) > 0;
     }
 
     public function hasTable(string $tableName): bool
     {
-        return in_array($tableName, $this->dbHelper->listTables());
+        return in_array($tableName, $this->db->listTables());
     }
 
     public function hasMigrationsTable(): bool
@@ -199,36 +186,5 @@ class Migrations
     protected function getFullSchemaFile(): string
     {
         return $this->getSchemaDirectory($this->dbType . '.sql');
-    }
-
-    /**
-     * Still unused
-     */
-    protected function createMigrationsTable(): void
-    {
-        if ($this->dbType === self::DB_TYPE_POSTGRESQL) {
-            $create = /** @lang text */
-                <<<SQL
-
-CREATE TABLE $this->tableName (
-  schema_version SMALLINT NOT NULL,
-  component_name VARCHAR(64) NOT NULL,
-  migration_time TIMESTAMP WITH TIME ZONE NOT NULL,
-  PRIMARY KEY (component_name, schema_version)
-);
-
-SQL;
-        } else {
-            $create = /** @lang text */
-                <<<SQL
-CREATE TABLE $this->tableName (
-  schema_version SMALLINT UNSIGNED NOT NULL,
-  component_name VARCHAR(64) NOT NULL,
-  migration_time DATETIME NOT NULL,
-  PRIMARY KEY (component_name, schema_version)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_bin;
-SQL;
-        }
-        $this->db->exec($create);
     }
 }

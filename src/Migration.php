@@ -3,7 +3,7 @@
 namespace IMEdge\DbMigration;
 
 use Exception;
-use PDO;
+use IMEdge\PDO\PDO;
 use RuntimeException;
 
 class Migration
