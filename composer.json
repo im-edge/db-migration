@@ -25,7 +25,7 @@
     "require": {
         "php": ">=8.1",
         "ext-pdo": "*",
-        "imedge/pdo": "^0.2"
+        "imedge/pdo": ">=0.3"
     },
     "require-dev": {
         "phpstan/phpstan": "^1.10 | ^2.1",
