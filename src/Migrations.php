@@ -31,8 +31,8 @@ class Migrations
     public function getLastMigrationNumber(): int
     {
         try {
-            $query = 'SELECT MAX(m.schema_version) AS schema_version'
-                . '  FROM m.' . $this->tableName
+            $query = 'SELECT MAX(schema_version) AS schema_version'
+                . ' FROM ' . $this->tableName
                 . ' WHERE component_name = ?';
 
             return (int) $this->db->fetchOne($query, [$this->componentName]);
