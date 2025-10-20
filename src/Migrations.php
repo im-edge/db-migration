@@ -94,6 +94,12 @@ class Migrations
         }
     }
 
+    public function createSchema(): void
+    {
+        $migration = new Migration(0, $this->loadMigrationFile(0));
+        $migration->apply($this->db);
+    }
+
     /**
      * @return int[]
      */
